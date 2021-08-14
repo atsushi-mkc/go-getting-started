@@ -14,6 +14,8 @@ import (
 	_ "github.com/heroku/x/hmetrics/onload"
 	_ "github.com/lib/pq"
 	"github.com/russross/blackfriday"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func repeatHandller(r int) gin.HandlerFunc {
@@ -58,6 +60,27 @@ func dbFunc(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
+type Tick struct {
+	Tick time.Time
+}
+
+func gormDBFunc(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var tick = Tick{Tick: time.Now()}
+		db.Create(&tick)
+		var ticks []Tick
+		result := db.Find(&ticks)
+		if result.Error != nil {
+			c.String(http.StatusInternalServerError,
+				fmt.Sprintf("Error reading ticks: %q", result.Error))
+		}
+		for _, t := range ticks {
+			c.String(http.StatusOK, fmt.Sprintf("Read from DB: %s\n", t.Tick.String()))
+		}
+
+	}
+}
+
 func main() {
 	port := os.Getenv("PORT")
 
@@ -71,10 +94,13 @@ func main() {
 		repeat = 5
 	}
 
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	sqlDB, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatalf("Error opening database: %q", err)
 	}
+	gormDB, err := gorm.Open(postgres.New(postgres.Config{
+		Conn: sqlDB,
+	}), &gorm.Config{})
 
 	router := gin.New()
 	router.Use(gin.Logger())
@@ -91,7 +117,7 @@ func main() {
 
 	router.GET("/repeat", repeatHandller(repeat))
 
-	router.GET("/db", dbFunc(db))
+	router.GET("/db", gormDBFunc(gormDB))
 
 	router.Run(":" + port)
 }
