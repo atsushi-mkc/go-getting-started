@@ -7,6 +7,11 @@ github.com/gin-gonic/gin/render
 ## explicit
 github.com/heroku/x/hmetrics
 github.com/heroku/x/hmetrics/onload
+# github.com/lib/pq v1.10.2
+## explicit
+github.com/lib/pq
+github.com/lib/pq/oid
+github.com/lib/pq/scram
 # github.com/manucorporat/sse v0.0.0-20150604091100-c142f0f1baea
 ## explicit
 github.com/manucorporat/sse
