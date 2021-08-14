@@ -77,8 +77,17 @@ func gormDBFunc(db *gorm.DB) gin.HandlerFunc {
 		for _, t := range ticks {
 			c.String(http.StatusOK, fmt.Sprintf("Read from DB: %s\n", t.Tick.String()))
 		}
-
 	}
+}
+
+const location = "Asia/Tokyo"
+
+func initTimeLocation() {
+	loc, err := time.LoadLocation(location)
+	if err != nil {
+		loc = time.FixedZone(location, 9*60*60)
+	}
+	time.Local = loc
 }
 
 func main() {
@@ -94,13 +103,19 @@ func main() {
 		repeat = 5
 	}
 
+	initTimeLocation()
+
 	sqlDB, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatalf("Error opening database: %q", err)
 	}
-	gormDB, err := gorm.Open(postgres.New(postgres.Config{
+	gormDB, gormErr := gorm.Open(postgres.New(postgres.Config{
 		Conn: sqlDB,
 	}), &gorm.Config{})
+
+	if gormErr != nil {
+		log.Fatalf("Gorm Error opening database: %q", gormErr)
+	}
 
 	router := gin.New()
 	router.Use(gin.Logger())
