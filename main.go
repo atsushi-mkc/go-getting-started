@@ -129,5 +129,10 @@ func main() {
 	router.GET("/api/user", user.GetAll)
 	router.GET("/api/user/:id", user.Get)
 	router.PUT("/api/user/:id", user.Update)
+
+	db.GetDB().AutoMigrate(&models.BasicAuthUser{})
+	basicUser := controllers.BasicAuthUserController{}
+	router.POST("/signup", basicUser.Signup)
+
 	router.Run(":" + port)
 }
