@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/base64"
 	"net/http"
 	"time"
 
@@ -43,5 +44,36 @@ func (u BasicAuthUserController) Signup(c *gin.Context) {
 	c.JSON(http.StatusOK, resMesage)
 }
 func (u BasicAuthUserController) Get(c *gin.Context) {
+	basic := c.Request.Header.Get("Authosization")
+	if basic == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Authentication Faild"})
+		return
+	}
+	db := db.GetDB()
+	uid := c.Param("id")
+	user := models.BasicAuthUser{}
+	result := db.Where("ID = ?", uid).Find(&user)
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "No User found"})
+		return
+	}
+	userBasic := authorizationHeader(user.ID, user.Password)
+	if userBasic != basic {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Authentication Faild"})
+		return
+	}
+	resUser := models.ResponseUser{ID: user.ID, Nickname: *user.Nickname}
+	resMesage := models.ResponseMessage{
+		Message: "User details by user_id",
+		User:    resUser,
+	}
+	c.JSON(http.StatusOK, resMesage)
+}
 
+func authorizationHeader(user, password string) string {
+	base := user + ":" + password
+	return "Basic " + base64.StdEncoding.EncodeToString([]byte(base))
 }
