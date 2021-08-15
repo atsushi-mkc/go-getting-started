@@ -133,6 +133,7 @@ func main() {
 	db.GetDB().AutoMigrate(&models.BasicAuthUser{})
 	basicUser := controllers.BasicAuthUserController{}
 	router.POST("/signup", basicUser.Signup)
+	router.POST("/users/:id", basicUser.Get)
 
 	router.Run(":" + port)
 }
