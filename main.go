@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/heroku/go-getting-started/api/controllers"
+	"github.com/heroku/go-getting-started/api/models"
 	"github.com/heroku/go-getting-started/db"
 	_ "github.com/heroku/x/hmetrics/onload"
 	_ "github.com/lib/pq"
@@ -121,5 +123,11 @@ func main() {
 
 	router.GET("/db", gormDBFunc())
 
+	db.GetDB().AutoMigrate(&models.User{})
+	user := controllers.UserController{}
+	router.POST("/api/user", user.Add)
+	router.GET("/api/user", user.GetAll)
+	router.GET("/api/user/:id", user.Get)
+	router.PUT("/api/user/:id", user.Update)
 	router.Run(":" + port)
 }
